@@ -1,4 +1,3 @@
-import torch
 import numpy as np
 import math
 
@@ -45,13 +44,3 @@ def average_pool(x: np.ndarray, kernel_size, stride) -> np.ndarray:
     w_o = math.floor((w_i - (w_k - 1) - 1) / stride[1] + 1)
     col = im2col(x, kernel_size, stride)
     return np.mean(col, axis=-1).reshape(h_o, w_o)
-
-
-def distance(x: torch.Tensor, y: torch.Tensor) -> torch.Tensor:
-    return torch.mean((x - y) ** 2)
-
-
-def vote(x: torch.Tensor, clazz, device=None):
-    mat = torch.zeros((clazz,), device=device)
-    mat[x] = 1
-    return torch.argmax(mat)
