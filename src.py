@@ -23,7 +23,7 @@ def src_one(y: torch.Tensor, D: torch.Tensor, *,
     D_x = D_x.permute([1, 0])  # D_x(n_features, class_sz*train_im_sz)
     # y(n_features)
     a = omp(D_x, y, k=k, device=device)  # a(class_sz*train_im_sz)
-    X_i = torch.permute(D, [0, 2, 1])  # X_i(class_sz, h*w, train_im_sz)
+    X_i = D.permute([0, 2, 1])  # X_i(class_sz, h*w, train_im_sz)
     a_i = a.view(class_sz, train_im_sz, 1)  # a(class_sz, train_im_sz, 1)
     y_p = torch.matmul(X_i, a_i).view(class_sz, n_features)
     e_y = torch.mean((y - y_p) ** 2, dim=1)
