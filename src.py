@@ -3,6 +3,7 @@ import numpy as np
 from tqdm import tqdm
 
 from omp import omp
+import dataset
 
 
 def src_one(y: torch.Tensor, D: torch.Tensor, *,
@@ -33,11 +34,11 @@ def src_one(y: torch.Tensor, D: torch.Tensor, *,
 def src(train_ds: torch.Tensor, test_ds: torch.Tensor, *,
         k=None, device=None) -> np.ndarray:
     """
-
-    :param train_ds: (class_sz, train_im_sz, h, w)
-    :param test_ds: (class_sz, test_im_sz, h, w)
+    Sparse representation-based Classification
+    :param train_ds: torch tensor with shape (class_sz, train_im_sz, h, w)
+    :param test_ds: torch tensor with shape (class_sz, test_im_sz, h, w)
     :param k: class
-    :param device: pytorch device
+    :param device: torch device
     :return: np.ndarray
     """
     assert train_ds.dim() == 4
@@ -48,7 +49,7 @@ def src(train_ds: torch.Tensor, test_ds: torch.Tensor, *,
     class_sz, train_im_sz, h, w = train_ds.size()
     _, test_im_sz, _, _ = test_ds.size()
     D = train_ds.view(class_sz, train_im_sz, h * w)
-    ret = np.zeros([class_sz, train_im_sz], dtype=np.int32)
+    ret = np.zeros([class_sz, test_im_sz], dtype=np.int32)
     for i in tqdm(range(class_sz * test_im_sz)):
         test_class = i // test_im_sz
         test_im = i % test_im_sz
@@ -59,7 +60,7 @@ def src(train_ds: torch.Tensor, test_ds: torch.Tensor, *,
 
 
 def src_eval(train_ds: torch.Tensor, test_ds: torch.Tensor, *,
-             k=None, reduction=1, device=None) -> np.ndarray:
+             k=None, reduction=2, device=None) -> np.ndarray:
     """
 
     :param train_ds: (class_sz, train_im_sz, h, w)
@@ -71,7 +72,7 @@ def src_eval(train_ds: torch.Tensor, test_ds: torch.Tensor, *,
     """
     mat = src(train_ds, test_ds, k=k, device=device)
     assert mat.ndim == 2
-    class_sz, test_im_sz = mat.shape
+    class_sz, _ = mat.shape
     label = np.arange(0, class_sz).reshape(class_sz, 1)  # (class_sz, 1)
     arr = np.where(mat == label, 1, 0)
 
@@ -83,3 +84,19 @@ def src_eval(train_ds: torch.Tensor, test_ds: torch.Tensor, *,
         return arr.mean()
     else:
         raise ValueError("reduction must be 0 or 1 or 2")
+
+
+if __name__ == '__main__':
+    use_cuda = torch.cuda.is_available()
+    device = torch.device("cuda" if use_cuda else "cpu")
+    print(device)
+
+    train_ds = dataset.train()
+    train_ds = torch.tensor(train_ds, device=device)
+
+    test_ds = dataset.test()
+    test_ds = torch.tensor(test_ds, device=device)
+
+    y = train_ds[0, 0, :, :]
+    accu = src_one(y.view(40 * 30), train_ds.view(100, 14, 40 * 30), k=60, device=device)
+    print(accu)

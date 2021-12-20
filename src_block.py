@@ -63,7 +63,7 @@ def src_block(train_ds: List[torch.Tensor], test_ds: List[torch.Tensor], *,
 
 
 def src_block_eval(train_ds: List[torch.Tensor], test_ds: List[torch.Tensor], *,
-                   k=None, reduction=1, device=None) -> np.ndarray:
+                   k=None, reduction=2, device=None) -> np.ndarray:
     """
 
     :param train_ds: [(class_sz, train_im_sz, h, w)]
@@ -74,7 +74,7 @@ def src_block_eval(train_ds: List[torch.Tensor], test_ds: List[torch.Tensor], *,
     :return: Tuple[float, np.ndarray]
     """
     mat = src_block(train_ds, test_ds, k=k, device=device)
-    class_sz, test_im_sz = mat.shape
+    class_sz, _ = mat.shape
     label = np.arange(0, class_sz).reshape(class_sz, 1)  # (class_sz, 1)
     arr = np.where(mat == label, 1, 0)
 
@@ -101,5 +101,5 @@ if __name__ == '__main__':
 
     train_ds = split4(train_ds)
     test_ds = split4(test_ds)
-    accu = src_block_eval(train_ds, test_ds, k=15, device=device)
+    accu = src_block_eval(train_ds, test_ds, k=60, device=device)
     print(accu)
